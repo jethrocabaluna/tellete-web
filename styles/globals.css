@@ -1,26 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  --primary: #fcfbf1;
+  --primary-overlay: rgba(252, 251, 241, 0.7);
+  --primary-dark: #323127;
+  --primary-dark-overlay: rgba(50, 49, 39, 0.7);
+  --secondary: #f0a90f;
+  --secondary-dark: #59491a;
+  --success: #44d120;
+  --info: #4a8dfc;
+  --warning: #f2da0b;
+  --danger: #e5472e;
+}
+
 html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans,
+    Helvetica Neue, sans-serif;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+html body {
+  color: var(--primary-dark);
+  background-color: var(--primary);
+  height: 100vh;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+html.dark body {
+  color: var(--primary);
+  background-color: var(--primary-dark);
+}
+
+#__next {
+  height: 100%;
+  width: 100%;
 }
 
 * {
   box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-  body {
-    color: white;
-    background: black;
-  }
+/* .chat-box {
+  height: calc(100% - 50px);
+} */
+
+.chat-box__chats {
+  @apply bg-primary dark:bg-primary-dark;
+  height: calc(100% - 50px);
+}
+
+/* .chat-box__chats__message p:first-of-type {
+  width: calc(100% - 200px);
+}
+
+.chat-box__chats__message p:last-of-type {
+  width: 200px;
+} */
+
+/* .chat-box__chats__message:nth-child(odd) {
+  @apply opacity-90;
+} */
+
+.chat-box__tools {
+  height: 50px;
+}
+
+.chat-box__tools textarea {
+  @apply bg-primary-dark dark:bg-primary placeholder-primary dark:placeholder-primary-dark text-primary dark:text-primary-dark;
+  height: 50px;
+}
+
+.modal-overlay {
+  @apply bg-primary-light-overlay dark:bg-primary-dark-overlay z-50;
+  position: fixed;
+  inset: 0px;
 }
