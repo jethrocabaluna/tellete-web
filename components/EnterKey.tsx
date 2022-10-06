@@ -6,13 +6,18 @@ import { pemToArrayBuffer } from '@/utils/pemToArrayBuffer'
 import useChainContext from '@/hooks/useChainContext'
 import Button from './Button'
 import Modal from './Modal'
+import { trpc } from '../utils/trpc'
 
 const EnterKey = () => {
-  const { getPublicKey, username, setHasKeys } = useChainContext()
+  const { username, setHasKeys } = useChainContext()
   const [isOpen, setIsOpen] = useState(false)
   const [enteredKey, setEnteredKey] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [isVerified, setIsVerified] = useState(false)
+  const { data: storedPublicKey } = trpc.useQuery(
+    ['user.getPublicKey', { username: username ?? '' }],
+    { enabled: !!username, retry: (_, err) => err.data?.code !== 'NOT_FOUND' },
+  )
 
   const onVerify = async () => {
     if (username) {
@@ -38,7 +43,6 @@ const EnterKey = () => {
         encoded
       )
 
-      const storedPublicKey = await getPublicKey(username)
       if (storedPublicKey) {
         const publicKey = await window.crypto.subtle.importKey(
           'spki',

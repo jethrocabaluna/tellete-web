@@ -1,10 +1,12 @@
 import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
+import { withTRPC } from '@trpc/next'
+import type { AppRouter } from './api/trpc/[trpc]'
 import { ChainProvider } from '../contexts/ChainContext'
 import { ThemeProvider } from '../contexts/ThemeContext'
 
-function MyApp({ Component, pageProps }: AppProps) {
+const MyApp = ({ Component, pageProps }: AppProps) => {
   return (
     <ThemeProvider>
       <ChainProvider>
@@ -19,4 +21,14 @@ function MyApp({ Component, pageProps }: AppProps) {
   )
 }
 
-export default MyApp
+export default withTRPC<AppRouter>({
+  config: () => {
+    const url = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}/api/trpc`
+      : 'http://localhost:3000/api/trpc'
+    return {
+      url,
+    }
+  },
+  ssr: true,
+})(MyApp)

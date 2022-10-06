@@ -12,6 +12,10 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.0.10",
+    "@trpc/client": "^9.27.4",
+    "@trpc/next": "^9.27.4",
+    "@trpc/react": "^9.27.4",
+    "@trpc/server": "^9.27.4",
     "base64-arraybuffer": "^1.0.2",
     "clsx": "^1.2.1",
     "ethers": "^5.7.0",
@@ -19,7 +23,9 @@
     "next": "12.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-modal": "^3.15.1"
+    "react-modal": "^3.15.1",
+    "react-query": "3",
+    "zod": "^3.19.1"
   },
   "devDependencies": {
     "@typechain/ethers-v5": "^10.1.0",

@@ -38,15 +38,15 @@ export declare namespace MessageRelay {
 
 export interface MessageRelayInterface extends utils.Interface {
   functions: {
-    "addUser(string,string)": FunctionFragment;
-    "changeUserPublicKey(string)": FunctionFragment;
-    "deleteMessageFrom(string)": FunctionFragment;
-    "getMessage(string)": FunctionFragment;
+    "addUser(address,string,string)": FunctionFragment;
+    "changeUserPublicKey(address,string)": FunctionFragment;
+    "deleteMessageFrom(address,string)": FunctionFragment;
+    "getMessage(address,string)": FunctionFragment;
     "getPublicKey(string)": FunctionFragment;
-    "getUsername()": FunctionFragment;
-    "hasMessageFrom(string)": FunctionFragment;
-    "hasMessageTo(string)": FunctionFragment;
-    "sendMessage(string,string)": FunctionFragment;
+    "getUsername(address)": FunctionFragment;
+    "hasMessageFrom(address,string)": FunctionFragment;
+    "hasMessageTo(address,string)": FunctionFragment;
+    "sendMessage(address,string,string)": FunctionFragment;
   };
 
   getFunction(
@@ -64,19 +64,23 @@ export interface MessageRelayInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "addUser",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "changeUserPublicKey",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "deleteMessageFrom",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getMessage",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getPublicKey",
@@ -84,19 +88,23 @@ export interface MessageRelayInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getUsername",
-    values?: undefined
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "hasMessageFrom",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "hasMessageTo",
-    values: [PromiseOrValue<string>]
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "sendMessage",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
+    ]
   ): string;
 
   decodeFunctionResult(functionFragment: "addUser", data: BytesLike): Result;
@@ -161,22 +169,26 @@ export interface MessageRelay extends BaseContract {
 
   functions: {
     addUser(
+      userAddress: PromiseOrValue<string>,
       username: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     changeUserPublicKey(
+      userAddress: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     deleteMessageFrom(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     getMessage(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[MessageRelay.MessageStructOutput]>;
@@ -186,19 +198,25 @@ export interface MessageRelay extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    getUsername(overrides?: CallOverrides): Promise<[string]>;
+    getUsername(
+      userAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
 
     hasMessageFrom(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
     hasMessageTo(
+      userAddress: PromiseOrValue<string>,
       toUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
     sendMessage(
+      userAddress: PromiseOrValue<string>,
       username: PromiseOrValue<string>,
       content: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -206,22 +224,26 @@ export interface MessageRelay extends BaseContract {
   };
 
   addUser(
+    userAddress: PromiseOrValue<string>,
     username: PromiseOrValue<string>,
     publicKey: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   changeUserPublicKey(
+    userAddress: PromiseOrValue<string>,
     publicKey: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   deleteMessageFrom(
+    userAddress: PromiseOrValue<string>,
     fromUsername: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   getMessage(
+    userAddress: PromiseOrValue<string>,
     fromUsername: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<MessageRelay.MessageStructOutput>;
@@ -231,19 +253,25 @@ export interface MessageRelay extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
-  getUsername(overrides?: CallOverrides): Promise<string>;
+  getUsername(
+    userAddress: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string>;
 
   hasMessageFrom(
+    userAddress: PromiseOrValue<string>,
     fromUsername: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
   hasMessageTo(
+    userAddress: PromiseOrValue<string>,
     toUsername: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
   sendMessage(
+    userAddress: PromiseOrValue<string>,
     username: PromiseOrValue<string>,
     content: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -251,22 +279,26 @@ export interface MessageRelay extends BaseContract {
 
   callStatic: {
     addUser(
+      userAddress: PromiseOrValue<string>,
       username: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     changeUserPublicKey(
+      userAddress: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     deleteMessageFrom(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     getMessage(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<MessageRelay.MessageStructOutput>;
@@ -276,45 +308,55 @@ export interface MessageRelay extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    getUsername(overrides?: CallOverrides): Promise<string>;
+    getUsername(
+      userAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string>;
 
     hasMessageFrom(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
     hasMessageTo(
+      userAddress: PromiseOrValue<string>,
       toUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
     sendMessage(
+      userAddress: PromiseOrValue<string>,
       username: PromiseOrValue<string>,
       content: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<MessageRelay.MessageStructOutput>;
   };
 
   filters: {};
 
   estimateGas: {
     addUser(
+      userAddress: PromiseOrValue<string>,
       username: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     changeUserPublicKey(
+      userAddress: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     deleteMessageFrom(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     getMessage(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -324,19 +366,25 @@ export interface MessageRelay extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getUsername(overrides?: CallOverrides): Promise<BigNumber>;
+    getUsername(
+      userAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     hasMessageFrom(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     hasMessageTo(
+      userAddress: PromiseOrValue<string>,
       toUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     sendMessage(
+      userAddress: PromiseOrValue<string>,
       username: PromiseOrValue<string>,
       content: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -345,22 +393,26 @@ export interface MessageRelay extends BaseContract {
 
   populateTransaction: {
     addUser(
+      userAddress: PromiseOrValue<string>,
       username: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     changeUserPublicKey(
+      userAddress: PromiseOrValue<string>,
       publicKey: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     deleteMessageFrom(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     getMessage(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -370,19 +422,25 @@ export interface MessageRelay extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getUsername(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    getUsername(
+      userAddress: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     hasMessageFrom(
+      userAddress: PromiseOrValue<string>,
       fromUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     hasMessageTo(
+      userAddress: PromiseOrValue<string>,
       toUsername: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     sendMessage(
+      userAddress: PromiseOrValue<string>,
       username: PromiseOrValue<string>,
       content: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }

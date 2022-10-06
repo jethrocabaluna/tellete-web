@@ -5,6 +5,7 @@ import useChainContext from '../hooks/useChainContext'
 import useLocalStorage from '../hooks/useLocalStorage'
 import Button from './Button'
 import ConfirmModal from './ConfirmModal'
+import { trpc } from '../utils/trpc'
 
 type Props = {
   contactUsername: string
@@ -17,16 +18,48 @@ const ChatBox = ({
     decryptMessage,
     deleteMessageFrom,
     encryptMessage,
-    getMessage,
-    hasMessageTo,
     sendMessage,
     updateLastSynced,
     username,
+    currentAccount = '',
+    hasKeys,
   } = useChainContext()
   const [inbox, setInbox] = useLocalStorage<InboxItem[]>(`${username}-${contactUsername}-inbox`, [])
   const [decryptedInbox, setDecryptedInbox] = useState<InboxItem[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [overwriteLastMessageModalOpen, setOverwriteLastMessageModalOpen] = useState(false)
+  const { data: contactPublicKey } = trpc.useQuery(
+    ['user.getPublicKey', { username: contactUsername }],
+    { enabled: !!username, retry: (_, err) => err.data?.code !== 'NOT_FOUND' },
+  )
+  const { refetch: getNewMessage } = trpc.useQuery(
+    ['message.getMessage', { userAddress: currentAccount, from: contactUsername }],
+    {
+      enabled: false,
+      retry: (_, err) => err.data?.code !== 'NOT_FOUND',
+      onSuccess: async (data) => {
+        const isDeleted = await deleteMessageFrom(contactUsername)
+        if (isDeleted) {
+          setInbox([
+            ...inbox,
+            {
+              sender: contactUsername,
+              content: data.content,
+              createdAt: data.createdAt,
+            },
+          ])
+          updateLastSynced()
+        }
+      },
+    },
+  )
+  const { refetch: hasMessageTo } = trpc.useQuery(
+    ['message.hasMessageTo', { userAddress: currentAccount, to: contactUsername }],
+    {
+      enabled: false,
+      retry: (_, err) => err.data?.code !== 'NOT_FOUND',
+    },
+  )
 
   useEffect(() => {
     setInbox(JSON.parse(localStorage.getItem(`${username}-${contactUsername}-inbox`) ?? '[]'))
@@ -34,8 +67,12 @@ const ChatBox = ({
   }, [username, contactUsername])
 
   useEffect(() => {
-    decryptInbox()
-  }, [inbox])
+    if (hasKeys) {
+      decryptInbox()
+    } else {
+      setDecryptedInbox([])
+    }
+  }, [inbox, hasKeys])
 
   const decryptInbox = async () => {
     const newDecryptedInbox: InboxItem[] = []
@@ -60,7 +97,7 @@ const ChatBox = ({
   }
 
   const sendMessageHandler = async (message: string) => {
-    if (await hasMessageTo(contactUsername)) {
+    if ((await hasMessageTo()).data) {
       setOverwriteLastMessageModalOpen(true)
     } else {
       sendNewMessage(message)
@@ -68,7 +105,8 @@ const ChatBox = ({
   }
 
   const sendNewMessage = async (message: string, replaceLast?: boolean) => {
-    const encryptedMessage = await sendMessage(contactUsername, message.trim())
+    if (!contactPublicKey) return
+    const encryptedMessage = await sendMessage(contactUsername, message.trim(), contactPublicKey)
     if (encryptedMessage) {
       const newInbox = replaceLast ? inbox.filter(item => !item.lastMessage) : inbox.map(item => {
         delete item.lastMessage
@@ -92,26 +130,6 @@ const ChatBox = ({
   const onConfirmSendMessage = async (message: string) => {
     await sendNewMessage(message, true)
     setOverwriteLastMessageModalOpen(false)
-  }
-
-  const getNewMessage = async () => {
-    const message = await getMessage(contactUsername)
-    if (message) {
-      const isDeleted = await deleteMessageFrom(contactUsername)
-      if (isDeleted) {
-        setInbox([
-          ...inbox,
-          {
-            sender: contactUsername,
-            content: message.content,
-            createdAt: message.createdAt.toNumber(),
-          },
-        ])
-        updateLastSynced()
-      }
-    } else {
-      console.error(`no new message from ${contactUsername}`)
-    }
   }
 
   return (
@@ -149,7 +167,7 @@ const ChatBox = ({
           <Button
             className="col-span-3 xl:col-span-2 text-xs md:text-sm lg:text-base"
             title="Get message"
-            onClick={getNewMessage}
+            onClick={() => getNewMessage()}
           />
           <textarea
             placeholder="Enter a message"

@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import { withStopPropagation } from '@/utils/event'
 import { TrashIcon } from '@heroicons/react/24/solid'
 import useChainContext from '@/hooks/useChainContext'
+import { trpc } from '../utils/trpc'
 
 type Props = {
   active?: boolean
@@ -17,11 +18,21 @@ const Contact = ({
   onClick,
   onRemove,
 }: Props) => {
-  const { hasMessageFrom, lastSynced } = useChainContext()
+  const { lastSynced, currentAccount = '' } = useChainContext()
   const [hasMessage, setHasMessage] = useState(false)
+  const { refetch: hasMessageFrom } = trpc.useQuery(
+    ['message.hasMessageFrom', { userAddress: currentAccount, from: contactUsername }],
+    {
+      enabled: false,
+      retry: (_, err) => err.data?.code !== 'NOT_FOUND',
+      onSuccess: (data) => {
+        setHasMessage(data)
+      },
+    },
+  )
 
   const initialize = async () => {
-    const newHasMessage = await hasMessageFrom(contactUsername)
+    const newHasMessage = (await hasMessageFrom()).data
     setHasMessage(!!newHasMessage)
   }
 

@@ -3,9 +3,8 @@ import Cookies from 'js-cookie'
 import { ethers } from 'ethers'
 import { encode, decode } from 'base64-arraybuffer'
 
-import { MESSAGE_RELAY_ABI, MESSAGE_RELAY_ADDRESS } from '../utils/constants'
-import { MessageRelay } from '../types/ethers-contracts'
 import { pemToArrayBuffer } from '../utils/pemToArrayBuffer'
+import { trpc } from '../utils/trpc'
 
 type Context = {
   connectWallet: () => Promise<void>
@@ -17,17 +16,12 @@ type Context = {
     keyPair: CryptoKeyPair
     pemPublicKey: string,
     pemPrivateKey: string,
-    setPublicKeyOnChain: () => Promise<void>
     storeSessionKeys: (forUsername: string) => void
   }>
-  getMessage: (from: string) => Promise<MessageRelay.MessageStructOutput | void>
-  getPublicKey: (contactUsername: string) => Promise<string | void>
   hasKeys: boolean
-  hasMessageFrom: (to: string) => Promise<boolean | void>
-  hasMessageTo: (to: string) => Promise<boolean | void>
   lastSynced: Date
   register: (username: string) => Promise<void>
-  sendMessage: (to: string, message: string) => Promise<string | void>
+  sendMessage: (to: string, message: string, publicKey: string) => Promise<string | void>
   setHasKeys: (value: boolean) => void
   updateLastSynced: () => void
   username?: string
@@ -39,22 +33,26 @@ type Props = {
 
 export const ChainContext = createContext<Context | undefined>(undefined)
 
-const createContract = () => {
-  if (!window.ethereum) return null
-  const provider = new ethers.providers.Web3Provider(window.ethereum)
-  const signer = provider.getSigner()
-  return new ethers.Contract(MESSAGE_RELAY_ADDRESS, MESSAGE_RELAY_ABI, signer) as MessageRelay
-}
-
 export const ChainProvider: FC<Props> = ({ children }) => {
   const [currentAccount, setCurrentAccount] = useState('')
   const [username, setUsername] = useState('')
   const [hasKeys, setHasKeys] = useState(false)
   const [lastSynced, setLastSynced] = useState(new Date())
+  const { data: queriedUsername } = trpc.useQuery(
+    ['user.getUsername', { userAddress: currentAccount }],
+    { enabled: !!currentAccount, retry: (_, err) => err.data?.code !== 'NOT_FOUND' },
+  )
+  const { mutateAsync: registerMutation } = trpc.useMutation(['user.register'])
+  const { mutateAsync: sendMessageMutation } = trpc.useMutation(['message.sendMessage'])
+  const { mutateAsync: deleteMessageMutation } = trpc.useMutation(['message.deleteMessage'])
 
   useEffect(() => {
     connectWallet()
   }, [])
+
+  useEffect(() => {
+    setUsername(queriedUsername ?? '')
+  }, [queriedUsername])
 
   useEffect(() => {
     setHasKeys(!!Cookies.get(`${username}-public-key`) && !!Cookies.get(`${username}-private-key`))
@@ -72,13 +70,11 @@ export const ChainProvider: FC<Props> = ({ children }) => {
     // @ts-ignore: `on` does not exists in the ExternalProvider
     ehtereumProvider.on('accountsChanged', (accounts) => {
       setCurrentAccount(accounts[0])
-      getUsername()
     })
 
     if (window.ethereum.request) {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
       setCurrentAccount(accounts[0])
-      getUsername()
     }
   }
 
@@ -97,18 +93,6 @@ export const ChainProvider: FC<Props> = ({ children }) => {
     const privateKeyBuffer = await window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey)
     const privatePemExported = `-----BEGIN PRIVATE KEY-----\n${encode(privateKeyBuffer)}\n-----END PRIVATE KEY-----`
 
-    const setPublicKeyOnChain = async () => {
-      const contract = createContract()
-      if (contract) {
-        try {
-          const response = await contract.changeUserPublicKey(publicPemExported)
-          await response.wait()
-        } catch (err) {
-          console.error(err)
-        }
-      }
-    }
-
     const storeSessionKeys = (forUsername: string) => {
       Cookies.set(`${forUsername}-public-key`, publicPemExported)
       Cookies.set(`${forUsername}-private-key`, privatePemExported)
@@ -118,57 +102,25 @@ export const ChainProvider: FC<Props> = ({ children }) => {
       keyPair,
       pemPublicKey: publicPemExported,
       pemPrivateKey: privatePemExported,
-      setPublicKeyOnChain,
       storeSessionKeys,
     }
   }
 
   const register = async (username: string) => {
-    const contract = createContract()
-    if (contract) {
-      try {
-        const { pemPublicKey, storeSessionKeys } = await generateKeys()
-        const response = await contract.addUser(username, pemPublicKey)
-        await response.wait(1)
+    try {
+      const { pemPublicKey, storeSessionKeys } = await generateKeys()
+      await registerMutation({ userAddress: currentAccount, username, pemPublicKey })
 
-        storeSessionKeys(username)
-        setHasKeys(true)
-        setUsername(username)
-      } catch (err) {
-        console.error(err)
-      }
-
+      storeSessionKeys(username)
+      setHasKeys(true)
+      setUsername(username)
+    } catch (err) {
+      console.error(err)
     }
   }
 
-  const getPublicKey = async (contactUsername: string) => {
-    const contract = createContract()
-    if (contract) {
-      try {
-        return await contract.getPublicKey(contactUsername)
-      } catch (err) {
-        console.error(err)
-      }
-    }
-  }
-
-  const getUsername = async () => {
-    const contract = createContract()
-    if (contract) {
-      try {
-        const result = await contract.getUsername()
-        setUsername(result)
-      } catch (err) {
-        console.error(err)
-        setUsername('')
-      }
-    }
-  }
-
-  const sendMessage = async (to: string, message: string) => {
-    const contract = createContract()
-    if (contract) {
-      const contactPublicKeyString = await getPublicKey(to)
+  const sendMessage = async (to: string, message: string, contactPublicKeyString: string) => {
+    if (hasKeys && currentAccount) {
       let contactPublicKey: CryptoKey | null = null
       if (contactPublicKeyString) {
         contactPublicKey = await window.crypto.subtle.importKey(
@@ -193,8 +145,11 @@ export const ChainProvider: FC<Props> = ({ children }) => {
           )
           const messageString = String.fromCharCode.apply(null, new Uint8Array(encryptedMessage) as unknown as number[])
           const messageBase64 = window.btoa(messageString)
-          const response = await contract.sendMessage(to, messageBase64)
-          await response.wait()
+          await sendMessageMutation({
+            userAddress: currentAccount,
+            to,
+            encryptedMessage: messageBase64,
+          })
           return messageBase64
         } catch (err) {
           console.error(err)
@@ -203,48 +158,13 @@ export const ChainProvider: FC<Props> = ({ children }) => {
     }
   }
 
-  const getMessage = async (from: string) => {
-    const contract = createContract()
-    if (contract) {
-      try {
-        const result = await contract.getMessage(from)
-        return result
-      } catch (err) {
-        console.error(err)
-      }
-    }
-  }
-
-  const hasMessageTo = async (to: string) => {
-    const contract = createContract()
-    if (contract) {
-      try {
-        const result = await contract.hasMessageTo(to)
-        return result
-      } catch (err) {
-        console.error(err)
-      }
-    }
-  }
-
-  const hasMessageFrom = async (from: string) => {
-    const contract = createContract()
-    if (contract) {
-      try {
-        const result = await contract.hasMessageFrom(from)
-        return result
-      } catch (err) {
-        console.error(err)
-      }
-    }
-  }
-
   const deleteMessageFrom = async (from: string) => {
-    const contract = createContract()
-    if (contract) {
+    if (currentAccount) {
       try {
-        const response = await contract.deleteMessageFrom(from)
-        await response.wait()
+        await deleteMessageMutation({
+          userAddress: currentAccount,
+          from,
+        })
         return true
       } catch (err) {
         console.error(err)
@@ -308,11 +228,7 @@ export const ChainProvider: FC<Props> = ({ children }) => {
       deleteMessageFrom,
       encryptMessage,
       generateKeys,
-      getMessage,
-      getPublicKey,
       hasKeys,
-      hasMessageFrom,
-      hasMessageTo,
       lastSynced,
       register,
       sendMessage,

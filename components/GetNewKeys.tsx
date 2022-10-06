@@ -6,18 +6,20 @@ import Modal from './Modal'
 import clsx from 'clsx'
 import { InboxItem } from '@/types/common'
 import { encode } from 'base64-arraybuffer'
+import { trpc } from '../utils/trpc'
 
 const GetNewKeys = () => {
-  const { generateKeys, username, decryptMessage } = useChainContext()
+  const { generateKeys, username, decryptMessage, currentAccount } = useChainContext()
   const [isOpen, setIsOpen] = useState(false)
   const [newPrivateKey, setNewPrivateKey] = useState('')
   const [isCopied, setIsCopied] = useState(false)
+  const { mutateAsync: changePublicKey } = trpc.useMutation(['user.changePublicKey'])
 
   const onGetNewKeys = async () => {
-    if (username) {
-      const { pemPrivateKey, keyPair, setPublicKeyOnChain, storeSessionKeys } = await generateKeys()
+    if (username && currentAccount) {
+      const { pemPrivateKey, keyPair, pemPublicKey, storeSessionKeys } = await generateKeys()
 
-      await setPublicKeyOnChain()
+      await changePublicKey({ userAddress: currentAccount, newPublicKey: pemPublicKey })
       await changeContactsInboxKey(keyPair.publicKey)
       storeSessionKeys(username)
       setNewPrivateKey(pemPrivateKey)
