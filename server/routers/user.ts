@@ -5,6 +5,9 @@ import { createRouter } from 'server/createRouter'
 
 export const userRouter = createRouter()
   .query('getUsername', {
+    meta: {
+      hasAuth: false,
+    },
     input: z.object({
       userAddress: z.string(),
     }),
@@ -49,14 +52,22 @@ export const userRouter = createRouter()
     },
   })
   .mutation('register', {
+    meta: {
+      hasAuth: false,
+    },
     input: z.object({
-      userAddress: z.string(),
       username: z.string(),
       pemPublicKey: z.string(),
     }),
-    resolve: async ({ input: { userAddress, username, pemPublicKey } }) => {
+    resolve: async ({ input: { username, pemPublicKey }, ctx }) => {
+      if (!ctx.user?.address) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Something went wrong.',
+        })
+      }
       try {
-        const response = await contract.addUser(userAddress, username, pemPublicKey)
+        const response = await contract.addUser(ctx.user.address, username, pemPublicKey)
         await response.wait(1)
         return true
       } catch (err) {
@@ -87,19 +98,24 @@ export const userRouter = createRouter()
   })
   .mutation('changePublicKey', {
     input: z.object({
-      userAddress: z.string(),
       newPublicKey: z.string(),
     }),
-    resolve: async ({ input: { userAddress, newPublicKey } }) => {
+    resolve: async ({ input: { newPublicKey }, ctx }) => {
+      if (!ctx.user?.address) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Something went wrong.',
+        })
+      }
       try {
-        const response = await contract.changeUserPublicKey(userAddress, newPublicKey)
+        const response = await contract.changeUserPublicKey(ctx.user.address, newPublicKey)
         await response.wait(1)
         return true
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__NoUser') {
           throw new TRPCError({
             code: 'NOT_FOUND',
-            message: `No username with address "${userAddress}"`,
+            message: `No username with address "${ctx.user.address}"`,
           })
         }
       }

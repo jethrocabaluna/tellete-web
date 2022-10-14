@@ -19,7 +19,7 @@ const GetNewKeys = () => {
     if (username && currentAccount) {
       const { pemPrivateKey, keyPair, pemPublicKey, storeSessionKeys } = await generateKeys()
 
-      await changePublicKey({ userAddress: currentAccount, newPublicKey: pemPublicKey })
+      await changePublicKey({ newPublicKey: pemPublicKey })
       await changeContactsInboxKey(keyPair.publicKey)
       storeSessionKeys(username)
       setNewPrivateKey(pemPrivateKey)

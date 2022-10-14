@@ -21,7 +21,6 @@ const ChatBox = ({
     sendMessage,
     updateLastSynced,
     username,
-    currentAccount = '',
     hasKeys,
   } = useChainContext()
   const [inbox, setInbox] = useLocalStorage<InboxItem[]>(`${username}-${contactUsername}-inbox`, [])
@@ -33,7 +32,7 @@ const ChatBox = ({
     { enabled: !!username, retry: (_, err) => err.data?.code !== 'NOT_FOUND' },
   )
   const { refetch: getNewMessage } = trpc.useQuery(
-    ['message.getMessage', { userAddress: currentAccount, from: contactUsername }],
+    ['message.getMessage', { from: contactUsername }],
     {
       enabled: false,
       retry: (_, err) => err.data?.code !== 'NOT_FOUND',
@@ -54,7 +53,7 @@ const ChatBox = ({
     },
   )
   const { refetch: hasMessageTo } = trpc.useQuery(
-    ['message.hasMessageTo', { userAddress: currentAccount, to: contactUsername }],
+    ['message.hasMessageTo', { to: contactUsername }],
     {
       enabled: false,
       retry: (_, err) => err.data?.code !== 'NOT_FOUND',

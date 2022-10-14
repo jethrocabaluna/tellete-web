@@ -18,10 +18,10 @@ const Contact = ({
   onClick,
   onRemove,
 }: Props) => {
-  const { lastSynced, currentAccount = '' } = useChainContext()
+  const { lastSynced } = useChainContext()
   const [hasMessage, setHasMessage] = useState(false)
   const { refetch: hasMessageFrom } = trpc.useQuery(
-    ['message.hasMessageFrom', { userAddress: currentAccount, from: contactUsername }],
+    ['message.hasMessageFrom', { from: contactUsername }],
     {
       enabled: false,
       retry: (_, err) => err.data?.code !== 'NOT_FOUND',

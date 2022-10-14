@@ -25,6 +25,7 @@
     "react-dom": "18.2.0",
     "react-modal": "^3.15.1",
     "react-query": "3",
+    "superjson": "^1.10.0",
     "zod": "^3.19.1"
   },
   "devDependencies": {

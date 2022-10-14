@@ -6,12 +6,17 @@ import { createRouter } from 'server/createRouter'
 export const messageRouter = createRouter()
   .query('getMessage', {
     input: z.object({
-      userAddress: z.string(),
       from: z.string(),
     }),
-    resolve: async ({ input: { userAddress, from } }) => {
+    resolve: async ({ input: { from }, ctx }) => {
+      if (!ctx.user?.address) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Something went wrong.',
+        })
+      }
       try {
-        const message = await contract.getMessage(userAddress, from)
+        const message = await contract.getMessage(ctx.user.address, from)
         return {
           content: message.content,
           createdAt: message.createdAt.toNumber(),
@@ -38,12 +43,17 @@ export const messageRouter = createRouter()
   })
   .query('hasMessageFrom', {
     input: z.object({
-      userAddress: z.string(),
       from: z.string(),
     }),
-    resolve: async ({ input: { userAddress, from } }) => {
+    resolve: async ({ input: { from }, ctx }) => {
+      if (!ctx.user?.address) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Something went wrong.',
+        })
+      }
       try {
-        const hasMessage = await contract.hasMessageFrom(userAddress, from)
+        const hasMessage = await contract.hasMessageFrom(ctx.user.address, from)
         return hasMessage
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__NoUser') {
@@ -61,12 +71,17 @@ export const messageRouter = createRouter()
   })
   .query('hasMessageTo', {
     input: z.object({
-      userAddress: z.string(),
       to: z.string(),
     }),
-    resolve: async ({ input: { userAddress, to } }) => {
+    resolve: async ({ input: { to }, ctx }) => {
+      if (!ctx.user?.address) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Something went wrong.',
+        })
+      }
       try {
-        const hasMessage = await contract.hasMessageTo(userAddress, to)
+        const hasMessage = await contract.hasMessageTo(ctx.user.address, to)
         return hasMessage
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__NoUser') {
@@ -84,13 +99,18 @@ export const messageRouter = createRouter()
   })
   .mutation('sendMessage', {
     input: z.object({
-      userAddress: z.string(),
       to: z.string(),
       encryptedMessage: z.string(),
     }),
-    resolve: async ({ input: { userAddress, to, encryptedMessage } }) => {
+    resolve: async ({ input: { to, encryptedMessage }, ctx }) => {
+      if (!ctx.user?.address) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Something went wrong.',
+        })
+      }
       try {
-        const response = await contract.sendMessage(userAddress, to, encryptedMessage)
+        const response = await contract.sendMessage(ctx.user.address, to, encryptedMessage)
         await response.wait(1)
         return true
       } catch (err) {
@@ -115,12 +135,17 @@ export const messageRouter = createRouter()
   })
   .mutation('deleteMessage', {
     input: z.object({
-      userAddress: z.string(),
       from: z.string(),
     }),
-    resolve: async ({ input: { userAddress, from } }) => {
+    resolve: async ({ input: { from }, ctx }) => {
+      if (!ctx.user?.address) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Something went wrong.',
+        })
+      }
       try {
-        const response = await contract.deleteMessageFrom(userAddress, from)
+        const response = await contract.deleteMessageFrom(ctx.user.address, from)
         await response.wait(1)
         return true
       } catch (err) {

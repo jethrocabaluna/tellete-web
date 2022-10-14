@@ -34,6 +34,7 @@ type Props = {
 export const ChainContext = createContext<Context | undefined>(undefined)
 
 export const ChainProvider: FC<Props> = ({ children }) => {
+  // const [signature, setSignature] = useState<string>()
   const [currentAccount, setCurrentAccount] = useState('')
   const [username, setUsername] = useState('')
   const [hasKeys, setHasKeys] = useState(false)
@@ -52,6 +53,11 @@ export const ChainProvider: FC<Props> = ({ children }) => {
 
   useEffect(() => {
     setUsername(queriedUsername ?? '')
+    if (queriedUsername) {
+      Cookies.set('username', queriedUsername)
+    } else {
+      Cookies.remove('username')
+    }
   }, [queriedUsername])
 
   useEffect(() => {
@@ -68,12 +74,21 @@ export const ChainProvider: FC<Props> = ({ children }) => {
     const { provider: ehtereumProvider } = new ethers.providers.Web3Provider(window.ethereum)
 
     // @ts-ignore: `on` does not exists in the ExternalProvider
-    ehtereumProvider.on('accountsChanged', (accounts) => {
+    ehtereumProvider.on('accountsChanged', async (accounts) => {
+      const signer = new ethers.providers.JsonRpcProvider().getSigner(accounts[0])
+      const signature = await signer.signMessage('signature')
+      Cookies.set('signature', signature)
+      Cookies.set('public-address', accounts[0])
+      // setSignature(newSignature)
       setCurrentAccount(accounts[0])
     })
 
     if (window.ethereum.request) {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      const signer = new ethers.providers.JsonRpcProvider().getSigner(accounts[0])
+      const signature = await signer.signMessage('signature')
+      Cookies.set('signature', signature)
+      Cookies.set('public-address', accounts[0])
       setCurrentAccount(accounts[0])
     }
   }
@@ -109,11 +124,12 @@ export const ChainProvider: FC<Props> = ({ children }) => {
   const register = async (username: string) => {
     try {
       const { pemPublicKey, storeSessionKeys } = await generateKeys()
-      await registerMutation({ userAddress: currentAccount, username, pemPublicKey })
+      await registerMutation({ username, pemPublicKey })
 
       storeSessionKeys(username)
       setHasKeys(true)
       setUsername(username)
+      Cookies.set('username', username)
     } catch (err) {
       console.error(err)
     }
@@ -146,7 +162,6 @@ export const ChainProvider: FC<Props> = ({ children }) => {
           const messageString = String.fromCharCode.apply(null, new Uint8Array(encryptedMessage) as unknown as number[])
           const messageBase64 = window.btoa(messageString)
           await sendMessageMutation({
-            userAddress: currentAccount,
             to,
             encryptedMessage: messageBase64,
           })
@@ -162,7 +177,6 @@ export const ChainProvider: FC<Props> = ({ children }) => {
     if (currentAccount) {
       try {
         await deleteMessageMutation({
-          userAddress: currentAccount,
           from,
         })
         return true
