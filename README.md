@@ -1,34 +1,11 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## Tellete
 
-## Getting Started
+From the combination of the word "tell" and "delete", this is a decentralized messaging app that focuses on privacy.
 
-First, run the development server:
+This uses the smart contract [MessageRelay](https://github.com/jethrocabaluna/tellete-contracts) and the main functionality is that upon receiving a message from another user, that message will be deleted on the contract's state as well.
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+The messages and contacts are saved on the localStorage in which you are free to clear anytime.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+With the use of asymmetric encryption, the messages on the localStorage and the smart contract's state are encrypted, and can only be decrypted by the receiver.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
-
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Users can register with Metamask, by connecting your wallet and using a new username which will be linked to your public address.
