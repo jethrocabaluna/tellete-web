@@ -1,9 +1,11 @@
 import { ethers } from 'ethers'
-import { MESSAGE_RELAY_ABI, MESSAGE_RELAY_ADDRESS } from '@/utils/constants'
+import { MESSAGE_RELAY_ABI } from '@/utils/config'
 import { MessageRelay } from '@/types/ethers-contracts'
 
-const signer = new ethers.Wallet(
-  '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-  ethers.getDefaultProvider('http://localhost:8545')
-)
-export const contract = new ethers.Contract(MESSAGE_RELAY_ADDRESS, MESSAGE_RELAY_ABI, signer) as MessageRelay
+const provider = new ethers.providers.AlchemyProvider(process.env.NETWORK, process.env.ALCHEMY_API_KEY as string)
+const signer = new ethers.Wallet(process.env.SIGNER_KEY as string, provider)
+export const contract = new ethers.Contract(
+  process.env.MESSAGE_RELAY_ADDRESS as string,
+  MESSAGE_RELAY_ABI,
+  signer
+) as MessageRelay

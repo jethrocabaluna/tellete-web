@@ -6,6 +6,13 @@ import Button from './Button'
 const Register = () => {
   const { register, username: currentUsername } = useChainContext()
   const [username, setUsername] = useState(currentUsername ?? '')
+  const [loading, setLoading] = useState(false)
+
+  const handleRegister = async () => {
+    setLoading(true)
+    await register(username)
+    setLoading(false)
+  }
 
   return (
     <>
@@ -18,10 +25,18 @@ const Register = () => {
         )}
         type="text"
         placeholder="username"
+        disabled={loading}
         onChange={e => setUsername(e.target.value)}
       />
       <div className="mt-2">
-        <Button title="Register" solid onClick={() => register(username)} />
+        <Button
+          title="Register"
+          solid
+          disabled={loading}
+          loading={loading}
+          loadingTitle="Processing..."
+          onClick={handleRegister}
+        />
       </div>
     </>
   )

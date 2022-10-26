@@ -26,6 +26,8 @@ const ChatBox = ({
   const [inbox, setInbox] = useLocalStorage<InboxItem[]>(`${username}-${contactUsername}-inbox`, [])
   const [decryptedInbox, setDecryptedInbox] = useState<InboxItem[]>([])
   const [newMessage, setNewMessage] = useState('')
+  const [isSending, setIsSending] = useState(false)
+  const [isGettingMessage, setIsGettingMessage] = useState(false)
   const [overwriteLastMessageModalOpen, setOverwriteLastMessageModalOpen] = useState(false)
   const { data: contactPublicKey } = trpc.useQuery(
     ['user.getPublicKey', { username: contactUsername }],
@@ -49,6 +51,7 @@ const ChatBox = ({
           ])
           updateLastSynced()
         }
+        setIsGettingMessage(false)
       },
     },
   )
@@ -81,17 +84,6 @@ const ChatBox = ({
         content: await decryptMessage(item.content),
       })
     }
-    // for (let i = 1; i <= 100; i++) {
-    //   newDecryptedInbox.push({
-    //     content: `
-    //     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel scelerisque nibh. Donec nisi augue, feugiat sed ex et, luctus elementum felis. Morbi eu leo dui. Duis placerat condimentum mi, in condimentum sem gravida ultricies. Phasellus sagittis nunc id nibh tincidunt, id viverra metus efficitur. Maecenas ac congue sem. Nunc finibus euismod purus in pretium. Nullam ut eros enim. Suspendisse eget enim non erat semper tristique vel vitae dolor. Vestibulum suscipit elementum purus et congue. Etiam egestas et erat vitae tristique. Nulla aliquam pulvinar massa, at sodales justo vulputate eu. Sed mollis lacinia neque pharetra posuere. Donec et lectus luctus, volutpat felis et, pretium elit. Donec volutpat ipsum id ex scelerisque tempor. Proin et faucibus tortor.
-
-    //     Mauris at urna in ligula dapibus convallis vitae in quam. Aenean posuere nisi enim, at aliquam tellus gravida id. Vivamus eu risus ornare, placerat purus id, egestas justo. Fusce tempor nisi ipsum, quis molestie velit facilisis at. Donec pulvinar erat nec diam venenatis vestibulum. Aliquam convallis magna ac congue dapibus. Pellentesque eget viverra leo, vel mollis augue. Donec sollicitudin orci eros, nec rutrum libero suscipit nec. Sed aliquam vulputate mi, a cursus magna efficitur cursus.
-    //     `,
-    //     sender: Math.random() > 0.5 ? username! : contactUsername,
-    //     createdAt: new Date().getTime(),
-    //   })
-    // }
     setDecryptedInbox(newDecryptedInbox)
   }
 
@@ -105,6 +97,7 @@ const ChatBox = ({
 
   const sendNewMessage = async (message: string, replaceLast?: boolean) => {
     if (!contactPublicKey) return
+    setIsSending(true)
     const encryptedMessage = await sendMessage(contactUsername, message.trim(), contactPublicKey)
     if (encryptedMessage) {
       const newInbox = replaceLast ? inbox.filter(item => !item.lastMessage) : inbox.map(item => {
@@ -124,11 +117,17 @@ const ChatBox = ({
     } else {
       console.error('failed to send message')
     }
+    setIsSending(false)
   }
 
   const onConfirmSendMessage = async (message: string) => {
     await sendNewMessage(message, true)
     setOverwriteLastMessageModalOpen(false)
+  }
+
+  const onGetNewMessage = async () => {
+    setIsGettingMessage(true)
+    await getNewMessage()
   }
 
   return (
@@ -166,7 +165,10 @@ const ChatBox = ({
           <Button
             className="col-span-3 xl:col-span-2 text-xs md:text-sm lg:text-base"
             title="Get message"
-            onClick={() => getNewMessage()}
+            onClick={onGetNewMessage}
+            disabled={isGettingMessage}
+            loading={isGettingMessage}
+            loadingTitle="Processing..."
           />
           <textarea
             placeholder="Enter a message"
@@ -182,7 +184,9 @@ const ChatBox = ({
             className="col-span-3 xl:col-span-2 text-xs md:text-sm lg:text-base"
             title="Send"
             onClick={() => sendMessageHandler(newMessage)}
-            disabled={!newMessage}
+            disabled={!newMessage || isSending}
+            loading={isSending}
+            loadingTitle="Sending..."
           />
         </div>
       </div>

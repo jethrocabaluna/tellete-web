@@ -19,10 +19,13 @@ type Context = {
     storeSessionKeys: (forUsername: string) => void
   }>
   hasKeys: boolean
+  isLoading: boolean
   lastSynced: Date
   register: (username: string) => Promise<void>
   sendMessage: (to: string, message: string, publicKey: string) => Promise<string | void>
   setHasKeys: (value: boolean) => void
+  signature?: string
+  storeSignature: () => Promise<void>
   updateLastSynced: () => void
   username?: string
 }
@@ -34,12 +37,12 @@ type Props = {
 export const ChainContext = createContext<Context | undefined>(undefined)
 
 export const ChainProvider: FC<Props> = ({ children }) => {
-  // const [signature, setSignature] = useState<string>()
+  const [signature, setSignature] = useState(Cookies.get('signature'))
   const [currentAccount, setCurrentAccount] = useState('')
   const [username, setUsername] = useState('')
   const [hasKeys, setHasKeys] = useState(false)
   const [lastSynced, setLastSynced] = useState(new Date())
-  const { data: queriedUsername } = trpc.useQuery(
+  const { data: queriedUsername, isLoading } = trpc.useQuery(
     ['user.getUsername', { userAddress: currentAccount }],
     { enabled: !!currentAccount, retry: (_, err) => err.data?.code !== 'NOT_FOUND' },
   )
@@ -68,6 +71,14 @@ export const ChainProvider: FC<Props> = ({ children }) => {
     setLastSynced(new Date())
   }
 
+  const storeSignature = async () => {
+    if (!window.ethereum) return
+    const signer = new ethers.providers.Web3Provider(window.ethereum).getSigner()
+    const signature = await signer.signMessage('signature')
+    Cookies.set('signature', signature)
+    setSignature(signature)
+  }
+
   const connectWallet = async () => {
     if (!window.ethereum) return alert('Please install metamask')
 
@@ -75,19 +86,16 @@ export const ChainProvider: FC<Props> = ({ children }) => {
 
     // @ts-ignore: `on` does not exists in the ExternalProvider
     ehtereumProvider.on('accountsChanged', async (accounts) => {
-      const signer = new ethers.providers.JsonRpcProvider().getSigner(accounts[0])
-      const signature = await signer.signMessage('signature')
-      Cookies.set('signature', signature)
-      Cookies.set('public-address', accounts[0])
-      // setSignature(newSignature)
-      setCurrentAccount(accounts[0])
+      setSignature(undefined)
+      Cookies.remove('signature')
+      if (window.ethereum) {
+        Cookies.set('public-address', accounts[0])
+        setCurrentAccount(accounts[0])
+      }
     })
 
     if (window.ethereum.request) {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-      const signer = new ethers.providers.JsonRpcProvider().getSigner(accounts[0])
-      const signature = await signer.signMessage('signature')
-      Cookies.set('signature', signature)
       Cookies.set('public-address', accounts[0])
       setCurrentAccount(accounts[0])
     }
@@ -124,8 +132,8 @@ export const ChainProvider: FC<Props> = ({ children }) => {
   const register = async (username: string) => {
     try {
       const { pemPublicKey, storeSessionKeys } = await generateKeys()
+      await storeSignature()
       await registerMutation({ username, pemPublicKey })
-
       storeSessionKeys(username)
       setHasKeys(true)
       setUsername(username)
@@ -243,10 +251,13 @@ export const ChainProvider: FC<Props> = ({ children }) => {
       encryptMessage,
       generateKeys,
       hasKeys,
+      isLoading,
       lastSynced,
       register,
       sendMessage,
       setHasKeys,
+      signature,
+      storeSignature,
       updateLastSynced,
       username,
     }}>
