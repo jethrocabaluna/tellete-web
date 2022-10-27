@@ -22,9 +22,16 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
   )
 }
 
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_VERCEL_URL)
+    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+
+  return `http://localhost:${process.env.PORT ?? 3000}`
+}
+
 export default withTRPC<AppRouter>({
   config() {
-    const url = process.env.NEXT_PUBLIC_API_URL as string
+    const url = `${getBaseUrl()}/api/trpc`
     return {
       url,
       transformer: superjson,
