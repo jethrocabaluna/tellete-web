@@ -44,7 +44,13 @@ export const ChainProvider: FC<Props> = ({ children }) => {
   const [lastSynced, setLastSynced] = useState(new Date())
   const { data: queriedUsername, isLoading } = trpc.useQuery(
     ['user.getUsername', { userAddress: currentAccount }],
-    { enabled: !!currentAccount, retry: (_, err) => err.data?.code !== 'NOT_FOUND' },
+    {
+      enabled: !!currentAccount,
+      retry: (_, err) => err.data?.code !== 'NOT_FOUND',
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+    },
   )
   const { mutateAsync: registerMutation } = trpc.useMutation(['user.register'])
   const { mutateAsync: sendMessageMutation } = trpc.useMutation(['message.sendMessage'])

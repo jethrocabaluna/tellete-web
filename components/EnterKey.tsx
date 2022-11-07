@@ -16,7 +16,13 @@ const EnterKey = () => {
   const [isVerified, setIsVerified] = useState(false)
   const { data: storedPublicKey } = trpc.useQuery(
     ['user.getPublicKey', { username: username ?? '' }],
-    { enabled: !!username, retry: (_, err) => err.data?.code !== 'NOT_FOUND' },
+    {
+      enabled: !!username,
+      retry: (_, err) => err.data?.code !== 'NOT_FOUND',
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+    },
   )
 
   const onVerify = async () => {

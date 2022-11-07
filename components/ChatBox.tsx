@@ -33,7 +33,13 @@ const ChatBox = ({
   const [overwriteLastMessageModalOpen, setOverwriteLastMessageModalOpen] = useState(false)
   const { data: contactPublicKey } = trpc.useQuery(
     ['user.getPublicKey', { username: contactUsername }],
-    { enabled: !!username, retry: (_, err) => err.data?.code !== 'NOT_FOUND' },
+    {
+      enabled: !!username,
+      retry: (_, err) => err.data?.code !== 'NOT_FOUND',
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+    },
   )
   const { refetch: getNewMessage } = trpc.useQuery(
     ['message.getMessage', { from: contactUsername }],
@@ -58,6 +64,9 @@ const ChatBox = ({
             channel.unbind(eventName)
           })
         }
+      },
+      onError: () => {
+        setIsGettingMessage(false)
       },
     },
   )
