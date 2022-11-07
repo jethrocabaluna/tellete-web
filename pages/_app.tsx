@@ -3,20 +3,23 @@ import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import { withTRPC } from '@trpc/next'
 import superjson from 'superjson'
+import { ChainProvider } from '@/contexts/ChainContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
+import { PusherProvider } from '@/contexts/PusherContext'
 import type { AppRouter } from './api/trpc/[trpc]'
-import { ChainProvider } from '../contexts/ChainContext'
-import { ThemeProvider } from '../contexts/ThemeContext'
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
   return (
     <ThemeProvider>
       <ChainProvider>
-        <Head>
-          <title>
-            Tellete
-          </title>
-        </Head>
-        <Component {...pageProps} />
+        <PusherProvider>
+          <Head>
+            <title>
+              Tellete
+            </title>
+          </Head>
+          <Component {...pageProps} />
+        </PusherProvider>
       </ChainProvider>
     </ThemeProvider>
   )

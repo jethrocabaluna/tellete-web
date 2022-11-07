@@ -110,9 +110,8 @@ export const messageRouter = createRouter()
         })
       }
       try {
-        const response = await contract.sendMessage(ctx.user.address, to, encryptedMessage)
-        await response.wait(1)
-        return true
+        contract.sendMessage(ctx.user.address, to, encryptedMessage)
+        return
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__InvalidMessage') {
           throw new TRPCError({
@@ -145,9 +144,8 @@ export const messageRouter = createRouter()
         })
       }
       try {
-        const response = await contract.deleteMessageFrom(ctx.user.address, from)
-        await response.wait(1)
-        return true
+        contract.deleteMessageFrom(ctx.user.address, from)
+        return
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__NoUser') {
           throw new TRPCError({

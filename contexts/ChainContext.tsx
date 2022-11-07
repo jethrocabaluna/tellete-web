@@ -10,7 +10,7 @@ type Context = {
   connectWallet: () => Promise<void>
   currentAccount?: string
   decryptMessage: (message: string) => Promise<string>
-  deleteMessageFrom: (from: string) => Promise<boolean>
+  deleteMessageFrom: (from: string) => Promise<void>
   encryptMessage: (message: string) => Promise<string>
   generateKeys: () => Promise<{
     keyPair: CryptoKeyPair
@@ -21,7 +21,7 @@ type Context = {
   hasKeys: boolean
   isLoading: boolean
   lastSynced: Date
-  register: (username: string) => Promise<void>
+  register: (username: string) => Promise<(() => void) | void>
   sendMessage: (to: string, message: string, publicKey: string) => Promise<string | void>
   setHasKeys: (value: boolean) => void
   signature?: string
@@ -134,10 +134,12 @@ export const ChainProvider: FC<Props> = ({ children }) => {
       const { pemPublicKey, storeSessionKeys } = await generateKeys()
       await storeSignature()
       await registerMutation({ username, pemPublicKey })
-      storeSessionKeys(username)
-      setHasKeys(true)
-      setUsername(username)
-      Cookies.set('username', username)
+      return () => {
+        storeSessionKeys(username)
+        setHasKeys(true)
+        setUsername(username)
+        Cookies.set('username', username)
+      }
     } catch (err) {
       console.error(err)
     }
@@ -187,13 +189,11 @@ export const ChainProvider: FC<Props> = ({ children }) => {
         await deleteMessageMutation({
           from,
         })
-        return true
+        return
       } catch (err) {
         console.error(err)
       }
     }
-
-    return false
   }
 
   const encryptMessage = async (message: string) => {

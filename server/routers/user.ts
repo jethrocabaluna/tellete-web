@@ -67,9 +67,8 @@ export const userRouter = createRouter()
         })
       }
       try {
-        const response = await contract.addUser(ctx.user.address, username, pemPublicKey)
-        await response.wait(1)
-        return true
+        contract.addUser(ctx.user.address, username, pemPublicKey)
+        return
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__InvalidUsername') {
           throw new TRPCError({
@@ -108,9 +107,8 @@ export const userRouter = createRouter()
         })
       }
       try {
-        const response = await contract.changeUserPublicKey(ctx.user.address, newPublicKey)
-        await response.wait(1)
-        return true
+        contract.changeUserPublicKey(ctx.user.address, newPublicKey)
+        return
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__NoUser') {
           throw new TRPCError({

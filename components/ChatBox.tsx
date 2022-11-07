@@ -1,8 +1,9 @@
 import { InboxItem } from '@/types/common'
 import clsx from 'clsx'
 import React, { useEffect, useState } from 'react'
-import useChainContext from '../hooks/useChainContext'
-import useLocalStorage from '../hooks/useLocalStorage'
+import useChainContext from '@/hooks/useChainContext'
+import useLocalStorage from '@/hooks/useLocalStorage'
+import usePusherContext from '@/hooks/usePusherContext'
 import Button from './Button'
 import ConfirmModal from './ConfirmModal'
 import { trpc } from '../utils/trpc'
@@ -23,6 +24,7 @@ const ChatBox = ({
     username,
     hasKeys,
   } = useChainContext()
+  const { channel } = usePusherContext()
   const [inbox, setInbox] = useLocalStorage<InboxItem[]>(`${username}-${contactUsername}-inbox`, [])
   const [decryptedInbox, setDecryptedInbox] = useState<InboxItem[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -39,19 +41,23 @@ const ChatBox = ({
       enabled: false,
       retry: (_, err) => err.data?.code !== 'NOT_FOUND',
       onSuccess: async (data) => {
-        const isDeleted = await deleteMessageFrom(contactUsername)
-        if (isDeleted) {
-          setInbox([
-            ...inbox,
-            {
-              sender: contactUsername,
-              content: data.content,
-              createdAt: data.createdAt,
-            },
-          ])
-          updateLastSynced()
+        if (channel) {
+          const eventName = `message-deleted-from-${contactUsername}`
+          await deleteMessageFrom(contactUsername)
+          channel.bind(eventName, () => {
+            setInbox([
+              ...inbox,
+              {
+                sender: contactUsername,
+                content: data.content,
+                createdAt: data.createdAt,
+              },
+            ])
+            updateLastSynced()
+            setIsGettingMessage(false)
+            channel.unbind(eventName)
+          })
         }
-        setIsGettingMessage(false)
       },
     },
   )
@@ -98,26 +104,32 @@ const ChatBox = ({
   const sendNewMessage = async (message: string, replaceLast?: boolean) => {
     if (!contactPublicKey) return
     setIsSending(true)
-    const encryptedMessage = await sendMessage(contactUsername, message.trim(), contactPublicKey)
-    if (encryptedMessage) {
-      const newInbox = replaceLast ? inbox.filter(item => !item.lastMessage) : inbox.map(item => {
-        delete item.lastMessage
-        return item
+    if (channel) {
+      const eventName = `message-sent-to-${contactUsername}`
+      const encryptedMessage = await sendMessage(contactUsername, message.trim(), contactPublicKey)
+      channel.bind(eventName, async () => {
+        if (encryptedMessage) {
+          const newInbox = replaceLast ? inbox.filter(item => !item.lastMessage) : inbox.map(item => {
+            delete item.lastMessage
+            return item
+          })
+          setInbox([
+            ...newInbox,
+            {
+              sender: username ?? '',
+              content: await encryptMessage(message),
+              createdAt: Date.now(),
+              lastMessage: true,
+            },
+          ])
+          setNewMessage('')
+        } else {
+          console.error('failed to send message')
+        }
+        setIsSending(false)
+        channel.unbind(eventName)
       })
-      setInbox([
-        ...newInbox,
-        {
-          sender: username ?? '',
-          content: await encryptMessage(message),
-          createdAt: Date.now(),
-          lastMessage: true,
-        },
-      ])
-      setNewMessage('')
-    } else {
-      console.error('failed to send message')
     }
-    setIsSending(false)
   }
 
   const onConfirmSendMessage = async (message: string) => {

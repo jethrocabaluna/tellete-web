@@ -2,16 +2,24 @@ import React, { useState } from 'react'
 import clsx from 'clsx'
 import useChainContext from '@/hooks/useChainContext'
 import Button from './Button'
+import usePusherContext from '@/hooks/usePusherContext'
 
 const Register = () => {
   const { register, username: currentUsername } = useChainContext()
+  const { channel } = usePusherContext()
   const [username, setUsername] = useState(currentUsername ?? '')
   const [loading, setLoading] = useState(false)
 
   const handleRegister = async () => {
     setLoading(true)
-    await register(username)
-    setLoading(false)
+    if (channel) {
+      const onSuccess = await register(username)
+      channel.bind('user-added', () => {
+        if (onSuccess) onSuccess()
+        setLoading(false)
+        channel.unbind('user-added')
+      })
+    }
   }
 
   return (

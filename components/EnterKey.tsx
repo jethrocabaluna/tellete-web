@@ -70,6 +70,7 @@ const EnterKey = () => {
           Cookies.set(`${username}-private-key`, enteredKey)
           setIsVerified(true)
           setHasKeys(true)
+          setErrorMessage('')
           return result
         }
       }

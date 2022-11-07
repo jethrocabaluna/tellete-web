@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { KeyIcon, DocumentDuplicateIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import useChainContext from '@/hooks/useChainContext'
+import usePusherContext from '@/hooks/usePusherContext'
 import Button from './Button'
 import Modal from './Modal'
 import clsx from 'clsx'
@@ -9,6 +10,7 @@ import { encode } from 'base64-arraybuffer'
 import { trpc } from '../utils/trpc'
 
 const GetNewKeys = () => {
+  const { channel } = usePusherContext()
   const { generateKeys, username, decryptMessage, currentAccount } = useChainContext()
   const [isOpen, setIsOpen] = useState(false)
   const [newPrivateKey, setNewPrivateKey] = useState('')
@@ -19,10 +21,15 @@ const GetNewKeys = () => {
     if (username && currentAccount) {
       const { pemPrivateKey, keyPair, pemPublicKey, storeSessionKeys } = await generateKeys()
 
-      await changePublicKey({ newPublicKey: pemPublicKey })
-      await changeContactsInboxKey(keyPair.publicKey)
-      storeSessionKeys(username)
-      setNewPrivateKey(pemPrivateKey)
+      if (channel) {
+        await changePublicKey({ newPublicKey: pemPublicKey })
+        channel.bind('public-key-updated', async () => {
+          await changeContactsInboxKey(keyPair.publicKey)
+          storeSessionKeys(username)
+          setNewPrivateKey(pemPrivateKey)
+          channel.unbind('public-key-updated')
+        })
+      }
     }
   }
 

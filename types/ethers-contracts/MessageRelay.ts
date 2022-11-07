@@ -14,7 +14,11 @@ import type {
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -138,8 +142,58 @@ export interface MessageRelayInterface extends utils.Interface {
     data: BytesLike
   ): Result;
 
-  events: {};
+  events: {
+    "MessageDeleted(string,address)": EventFragment;
+    "MessageSent(address,string)": EventFragment;
+    "PublicKeyUpdated(address)": EventFragment;
+    "UserAdded(address)": EventFragment;
+  };
+
+  getEvent(nameOrSignatureOrTopic: "MessageDeleted"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "MessageSent"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "PublicKeyUpdated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "UserAdded"): EventFragment;
 }
+
+export interface MessageDeletedEventObject {
+  fromUsername: string;
+  toAddress: string;
+}
+export type MessageDeletedEvent = TypedEvent<
+  [string, string],
+  MessageDeletedEventObject
+>;
+
+export type MessageDeletedEventFilter = TypedEventFilter<MessageDeletedEvent>;
+
+export interface MessageSentEventObject {
+  fromAddress: string;
+  toUsername: string;
+}
+export type MessageSentEvent = TypedEvent<
+  [string, string],
+  MessageSentEventObject
+>;
+
+export type MessageSentEventFilter = TypedEventFilter<MessageSentEvent>;
+
+export interface PublicKeyUpdatedEventObject {
+  userAddress: string;
+}
+export type PublicKeyUpdatedEvent = TypedEvent<
+  [string],
+  PublicKeyUpdatedEventObject
+>;
+
+export type PublicKeyUpdatedEventFilter =
+  TypedEventFilter<PublicKeyUpdatedEvent>;
+
+export interface UserAddedEventObject {
+  userAddress: string;
+}
+export type UserAddedEvent = TypedEvent<[string], UserAddedEventObject>;
+
+export type UserAddedEventFilter = TypedEventFilter<UserAddedEvent>;
 
 export interface MessageRelay extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -330,10 +384,33 @@ export interface MessageRelay extends BaseContract {
       username: PromiseOrValue<string>,
       content: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<MessageRelay.MessageStructOutput>;
+    ): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "MessageDeleted(string,address)"(
+      fromUsername?: null,
+      toAddress?: null
+    ): MessageDeletedEventFilter;
+    MessageDeleted(
+      fromUsername?: null,
+      toAddress?: null
+    ): MessageDeletedEventFilter;
+
+    "MessageSent(address,string)"(
+      fromAddress?: null,
+      toUsername?: null
+    ): MessageSentEventFilter;
+    MessageSent(fromAddress?: null, toUsername?: null): MessageSentEventFilter;
+
+    "PublicKeyUpdated(address)"(
+      userAddress?: null
+    ): PublicKeyUpdatedEventFilter;
+    PublicKeyUpdated(userAddress?: null): PublicKeyUpdatedEventFilter;
+
+    "UserAdded(address)"(userAddress?: null): UserAddedEventFilter;
+    UserAdded(userAddress?: null): UserAddedEventFilter;
+  };
 
   estimateGas: {
     addUser(
