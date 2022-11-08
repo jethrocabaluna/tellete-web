@@ -110,7 +110,8 @@ export const messageRouter = createRouter()
         })
       }
       try {
-        contract.sendMessage(ctx.user.address, to, encryptedMessage)
+        const transaction = await contract.sendMessage(ctx.user.address, to, encryptedMessage)
+        transaction.wait()
         return
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__InvalidMessage') {
@@ -144,7 +145,8 @@ export const messageRouter = createRouter()
         })
       }
       try {
-        contract.deleteMessageFrom(ctx.user.address, from)
+        const transaction = await contract.deleteMessageFrom(ctx.user.address, from)
+        transaction.wait()
         return
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__NoUser') {

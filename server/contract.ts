@@ -6,12 +6,10 @@ import { MessageRelay } from '@/types/ethers-contracts'
 export let contract: MessageRelay
 
 if (process.env.NODE_ENV === 'production') {
-  console.log('in production')
   const provider = new ethers.providers.AlchemyProvider(process.env.NETWORK, process.env.ALCHEMY_API_KEY as string)
   const signer = new ethers.Wallet(process.env.SIGNER_KEY as string, provider)
   contract = new ethers.Contract(process.env.MESSAGE_RELAY_ADDRESS as string, MESSAGE_RELAY_ABI, signer) as MessageRelay
 } else {
-  console.log('not in production')
   const signer = new ethers.Wallet(process.env.SIGNER_KEY as string, ethers.getDefaultProvider('http://localhost:8545'))
   contract = new ethers.Contract(process.env.MESSAGE_RELAY_ADDRESS as string, MESSAGE_RELAY_ABI, signer) as MessageRelay
 }
@@ -25,26 +23,19 @@ const pusher = new Pusher({
 })
 
 if (contract) {
-  console.log('has contract')
   contract.on('UserAdded', (userAddress: string) => {
-    console.log('triggered UserAdded')
     pusher.trigger(userAddress.toLowerCase(), 'user-added', null)
   })
 
   contract.on('MessageSent', (fromAddress: string, toUsername: string) => {
-    console.log('triggered MessageSent')
     pusher.trigger(fromAddress.toLowerCase(), `message-sent-to-${toUsername}`, { fromAddress, toUsername })
   })
 
   contract.on('MessageDeleted', (fromUsername: string, toAddress: string) => {
-    console.log('triggered MessageDeleted')
     pusher.trigger(toAddress.toLowerCase(), `message-deleted-from-${fromUsername}`, { fromUsername, toAddress })
   })
 
   contract.on('PublicKeyUpdated', (userAddress: string) => {
-    console.log('triggered PublicKeyUpdated')
     pusher.trigger(userAddress.toLowerCase(), 'public-key-updated', null)
   })
-} else {
-  console.error('no contract')
 }
