@@ -2,7 +2,6 @@ import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { contract } from 'server/contract'
 import { createRouter } from 'server/createRouter'
-import { pusher } from 'server/pusher'
 
 export const messageRouter = createRouter()
   .query('getMessage', {
@@ -111,11 +110,6 @@ export const messageRouter = createRouter()
         })
       }
       try {
-        const filter = contract.filters.MessageSent(ctx.user.address, to)
-        contract.once(filter, (fromAddress, toUsername) => {
-          console.log('triggered MessageSent')
-          pusher.trigger(fromAddress.toLowerCase(), `message-sent-to-${toUsername}`, { fromAddress, toUsername })
-        })
         const transaction = await contract.sendMessage(ctx.user.address, to, encryptedMessage)
         transaction.wait()
         return
@@ -151,11 +145,6 @@ export const messageRouter = createRouter()
         })
       }
       try {
-        const filter = contract.filters.MessageDeleted(from, ctx.user.address)
-        contract.once(filter, (fromUsername, toAddress) => {
-          console.log('triggered MessageDeleted')
-          pusher.trigger(toAddress.toLowerCase(), `message-deleted-from-${fromUsername}`, { fromUsername, toAddress })
-        })
         const transaction = await contract.deleteMessageFrom(ctx.user.address, from)
         transaction.wait()
         return

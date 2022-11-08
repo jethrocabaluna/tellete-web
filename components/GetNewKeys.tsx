@@ -1,16 +1,15 @@
 import React, { useState } from 'react'
 import { KeyIcon, DocumentDuplicateIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import useChainContext from '@/hooks/useChainContext'
-import usePusherContext from '@/hooks/usePusherContext'
 import Button from './Button'
 import Modal from './Modal'
 import clsx from 'clsx'
 import { InboxItem } from '@/types/common'
 import { encode } from 'base64-arraybuffer'
 import { trpc } from '../utils/trpc'
+import { createContract } from '@/contexts/ChainContext'
 
 const GetNewKeys = () => {
-  const { channel } = usePusherContext()
   const { generateKeys, username, decryptMessage, currentAccount } = useChainContext()
   const [isOpen, setIsOpen] = useState(false)
   const [newPrivateKey, setNewPrivateKey] = useState('')
@@ -18,18 +17,17 @@ const GetNewKeys = () => {
   const { mutateAsync: changePublicKey } = trpc.useMutation(['user.changePublicKey'])
 
   const onGetNewKeys = async () => {
-    if (username && currentAccount) {
+    const contract = createContract()
+    if (username && currentAccount && contract) {
       const { pemPrivateKey, keyPair, pemPublicKey, storeSessionKeys } = await generateKeys()
-
-      if (channel) {
-        await changePublicKey({ newPublicKey: pemPublicKey })
-        channel.bind('public-key-updated', async () => {
-          await changeContactsInboxKey(keyPair.publicKey)
-          storeSessionKeys(username)
-          setNewPrivateKey(pemPrivateKey)
-          channel.unbind('public-key-updated')
-        })
-      }
+      const filter = contract.filters.PublicKeyUpdated(currentAccount)
+      contract.once(filter, async () => {
+        console.log('triggered PublicKeyUpdated in FE')
+        await changeContactsInboxKey(keyPair.publicKey)
+        storeSessionKeys(username)
+        setNewPrivateKey(pemPrivateKey)
+      })
+      await changePublicKey({ newPublicKey: pemPublicKey })
     }
   }
 

@@ -2,7 +2,6 @@ import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { contract } from 'server/contract'
 import { createRouter } from 'server/createRouter'
-import { pusher } from 'server/pusher'
 
 export const userRouter = createRouter()
   .query('getUsername', {
@@ -68,11 +67,6 @@ export const userRouter = createRouter()
         })
       }
       try {
-        const filter = contract.filters.UserAdded(ctx.user.address)
-        contract.once(filter, (userAddress) => {
-          console.log('triggered UserAdded')
-          pusher.trigger(userAddress.toLowerCase(), 'user-added', null)
-        })
         const transaction = await contract.addUser(ctx.user.address, username, pemPublicKey)
         transaction.wait()
         return
@@ -114,11 +108,6 @@ export const userRouter = createRouter()
         })
       }
       try {
-        const filter = contract.filters.PublicKeyUpdated(ctx.user.address)
-        contract.once(filter, (userAddress) => {
-          console.log('triggered PublicKeyUpdated')
-          pusher.trigger(userAddress.toLowerCase(), 'public-key-updated', null)
-        })
         const transaction = await contract.changeUserPublicKey(ctx.user.address, newPublicKey)
         transaction.wait()
         return

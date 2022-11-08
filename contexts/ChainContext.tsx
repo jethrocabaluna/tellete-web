@@ -3,8 +3,10 @@ import Cookies from 'js-cookie'
 import { ethers } from 'ethers'
 import { encode, decode } from 'base64-arraybuffer'
 
-import { pemToArrayBuffer } from '../utils/pemToArrayBuffer'
-import { trpc } from '../utils/trpc'
+import { MESSAGE_RELAY_ABI } from '@/utils/config'
+import { pemToArrayBuffer } from '@/utils/pemToArrayBuffer'
+import { trpc } from '@/utils/trpc'
+import { MessageRelay } from '@/types/ethers-contracts'
 
 type Context = {
   connectWallet: () => Promise<void>
@@ -21,7 +23,7 @@ type Context = {
   hasKeys: boolean
   isLoading: boolean
   lastSynced: Date
-  register: (username: string) => Promise<(() => void) | void>
+  register: (username: string) => Promise<void>
   sendMessage: (to: string, message: string, publicKey: string) => Promise<string | void>
   setHasKeys: (value: boolean) => void
   signature?: string
@@ -35,6 +37,13 @@ type Props = {
 }
 
 export const ChainContext = createContext<Context | undefined>(undefined)
+
+export const createContract = () => {
+  if (!window.ethereum) return null
+  const provider = new ethers.providers.Web3Provider(window.ethereum)
+  const signer = provider.getSigner()
+  return new ethers.Contract(process.env.NEXT_PUBLIC_MESSAGE_RELAY_ADDRESS as string, MESSAGE_RELAY_ABI, signer) as MessageRelay
+}
 
 export const ChainProvider: FC<Props> = ({ children }) => {
   const [signature, setSignature] = useState(Cookies.get('signature'))
@@ -136,16 +145,20 @@ export const ChainProvider: FC<Props> = ({ children }) => {
   }
 
   const register = async (username: string) => {
+    const contract = createContract()
+    if (!contract) return
     try {
       const { pemPublicKey, storeSessionKeys } = await generateKeys()
       await storeSignature()
-      await registerMutation({ username, pemPublicKey })
-      return () => {
+      const filter = contract.filters.UserAdded(currentAccount)
+      contract.once(filter, () => {
+        console.log('triggered UserAdded in FE')
         storeSessionKeys(username)
         setHasKeys(true)
         setUsername(username)
         Cookies.set('username', username)
-      }
+      })
+      await registerMutation({ username, pemPublicKey })
     } catch (err) {
       console.error(err)
     }
