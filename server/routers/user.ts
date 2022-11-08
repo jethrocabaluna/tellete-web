@@ -68,7 +68,7 @@ export const userRouter = createRouter()
       }
       try {
         const transaction = await contract.addUser(ctx.user.address, username, pemPublicKey)
-        transaction.wait()
+        await transaction.wait()
         return
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__InvalidUsername') {
@@ -109,7 +109,7 @@ export const userRouter = createRouter()
       }
       try {
         const transaction = await contract.changeUserPublicKey(ctx.user.address, newPublicKey)
-        transaction.wait()
+        await transaction.wait()
         return
       } catch (err) {
         if ((err as { errorName: string }).errorName === 'MessageRelay__NoUser') {
