@@ -389,27 +389,36 @@ export interface MessageRelay extends BaseContract {
 
   filters: {
     "MessageDeleted(string,address)"(
-      fromUsername?: null,
-      toAddress?: null
+      fromUsername?: PromiseOrValue<string> | null,
+      toAddress?: PromiseOrValue<string> | null
     ): MessageDeletedEventFilter;
     MessageDeleted(
-      fromUsername?: null,
-      toAddress?: null
+      fromUsername?: PromiseOrValue<string> | null,
+      toAddress?: PromiseOrValue<string> | null
     ): MessageDeletedEventFilter;
 
     "MessageSent(address,string)"(
-      fromAddress?: null,
-      toUsername?: null
+      fromAddress?: PromiseOrValue<string> | null,
+      toUsername?: PromiseOrValue<string> | null
     ): MessageSentEventFilter;
-    MessageSent(fromAddress?: null, toUsername?: null): MessageSentEventFilter;
+    MessageSent(
+      fromAddress?: PromiseOrValue<string> | null,
+      toUsername?: PromiseOrValue<string> | null
+    ): MessageSentEventFilter;
 
     "PublicKeyUpdated(address)"(
-      userAddress?: null
+      userAddress?: PromiseOrValue<string> | null
     ): PublicKeyUpdatedEventFilter;
-    PublicKeyUpdated(userAddress?: null): PublicKeyUpdatedEventFilter;
+    PublicKeyUpdated(
+      userAddress?: PromiseOrValue<string> | null
+    ): PublicKeyUpdatedEventFilter;
 
-    "UserAdded(address)"(userAddress?: null): UserAddedEventFilter;
-    UserAdded(userAddress?: null): UserAddedEventFilter;
+    "UserAdded(address)"(
+      userAddress?: PromiseOrValue<string> | null
+    ): UserAddedEventFilter;
+    UserAdded(
+      userAddress?: PromiseOrValue<string> | null
+    ): UserAddedEventFilter;
   };
 
   estimateGas: {
