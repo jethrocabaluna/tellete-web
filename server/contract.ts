@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import { MESSAGE_RELAY_ABI } from '@/utils/config'
 import { MessageRelay } from '@/types/ethers-contracts'
 
-export let contract: ethers.Contract
+export let contract: MessageRelay
 
 if (process.env.NODE_ENV === 'production') {
   const provider = new ethers.providers.AlchemyProvider(process.env.NETWORK, process.env.ALCHEMY_API_KEY as string)
