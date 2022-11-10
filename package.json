@@ -16,6 +16,7 @@
     "@trpc/next": "^9.27.4",
     "@trpc/react": "^9.27.4",
     "@trpc/server": "^9.27.4",
+    "@vercel/analytics": "^0.1.4",
     "base64-arraybuffer": "^1.0.2",
     "clsx": "^1.2.1",
     "ethers": "^5.7.0",

@@ -1,5 +1,6 @@
 import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
+import { Analytics } from '@vercel/analytics/react'
 import Head from 'next/head'
 import { withTRPC } from '@trpc/next'
 import superjson from 'superjson'
@@ -9,16 +10,19 @@ import type { AppRouter } from './api/trpc/[trpc]'
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
   return (
-    <ThemeProvider>
-      <ChainProvider>
-        <Head>
-          <title>
-            Tellete
-          </title>
-        </Head>
-        <Component {...pageProps} />
-      </ChainProvider>
-    </ThemeProvider>
+    <>
+      <ThemeProvider>
+        <ChainProvider>
+          <Head>
+            <title>
+              Tellete
+            </title>
+          </Head>
+          <Component {...pageProps} />
+        </ChainProvider>
+      </ThemeProvider>
+      <Analytics />
+    </>
   )
 }
 
