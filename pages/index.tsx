@@ -7,6 +7,7 @@ import Register from '@/components/Register'
 import Header from '@/components/Header'
 import MessagingSection from '@/components/MessagingSection'
 import SignOperations from '@/components/SignOperations'
+import Instruction from '@/components/Instruction'
 
 const Home: NextPage = () => {
   const { currentAccount, username, signature, isLoading } = useChainContext()
@@ -20,8 +21,11 @@ const Home: NextPage = () => {
 
   return (
     <div className="relative h-full">
-      <div className="absolute top-0 right-0 m-2">
+      <div className="absolute top-0 right-0 m-2 z-10">
         <ThemeToggle />
+      </div>
+      <div className="absolute top-0 right-12 z-10">
+        <Instruction />
       </div>
       <div className="relative h-full w-11/12 2xl:w-5/6 mx-auto">
         {
